@@ -1,7 +1,7 @@
 (2018.8.7)Edit note by Hanabi Syrup
 -----
 ### Problem decription
-The problem is to do a binary classification to figure out whether the given short video clip contains a centain behavior that a soccor player shot the goal.
+The problem is to do a binary classification to figure out whether the given short video clip contains a certain behavior that a soccor player shots the goal.
 
 ### How to do that with C3D-tensorflow repo and its pre-trained weights
 We try to use pre-trained weights, when trainning our on model.
