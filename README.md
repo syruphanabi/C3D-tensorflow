@@ -1,9 +1,9 @@
 (2018.8.7)Edit note by Hanabi Syrup
 -----
-# Problem decription
+### Problem decription
 The problem is to do a binary classification to figure out whether the given short video clip contains a centain behavior that a soccor player shot the goal.
 
-# How to do that with C3D-tensorflow repo and its pre-trained weights
+### How to do that with C3D-tensorflow repo and its pre-trained weights
 We try to use pre-trained weights, when trainning our on model.
 The pre-trained weights we uses is **sports1m_finetuning_ucf101.model**, which we download it following the instruction of the original repo.
 
@@ -14,16 +14,16 @@ However, our model is binary will the pre-trained weights contains the softmax l
 > 3. We change NUM_CLASSES in **c3d_models.py** to 2 instead of original 101.
 > 4. We make some change to **input_data.py**, since our version of `PIL.Image` does not have `img.width`.
 
-# Data
+### Data
 We provide short video clips of 20 ps with 25 fps as samples. And follows the instruction to convert each of them into 20 images. `./list/convert_images_to_list.sh` is also modified to avoid using `jot`
 
-# Requirement
+### Requirement
 Our version of code should work at least in following environment.
 > * numpy == 1.15.0
 > * tensorflow == 1.4.0
 > * cuda == 8.0.61
 
-# Result
+### Result
 
 
 
