@@ -69,6 +69,7 @@ def read_clip_and_label(filename, batch_size, start_pos=-1, num_frames_per_clip=
       break
     line = lines[index].strip('\n').split()
     dirname = line[0]
+    #print(dirname)
     tmp_label = line[1]
     if not shuffle:
       print("Loading a video clip from {}...".format(dirname))
@@ -77,12 +78,17 @@ def read_clip_and_label(filename, batch_size, start_pos=-1, num_frames_per_clip=
     if(len(tmp_data)!=0):
       for j in xrange(len(tmp_data)):
         img = Image.fromarray(tmp_data[j].astype(np.uint8))
-        if(img.width>img.height):
-          scale = float(crop_size)/float(img.height)
-          img = np.array(cv2.resize(np.array(img),(int(img.width * scale + 1), crop_size))).astype(np.float32)
+        #print(img.size)
+        width = img.size[0]
+        height = img.size[1]
+        if(width>height):
+          scale = float(crop_size)/float(height)
+          img = np.array(cv2.resize(np.array(img),(int(width * scale + 1), crop_size))).astype(np.float32)
         else:
-          scale = float(crop_size)/float(img.width)
-          img = np.array(cv2.resize(np.array(img),(crop_size, int(img.height * scale + 1)))).astype(np.float32)
+          scale = float(crop_size)/float(width)
+          img = np.array(cv2.resize(np.array(img),(crop_size, int(height * scale + 1)))).astype(np.float32)
+        #print(img.size)
+        #print(img.size[0] - crop_size)
         crop_x = int((img.shape[0] - crop_size)/2)
         crop_y = int((img.shape[1] - crop_size)/2)
         img = img[crop_x:crop_x+crop_size, crop_y:crop_y+crop_size,:] - np_mean[j]

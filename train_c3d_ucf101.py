@@ -27,10 +27,13 @@ import numpy as np
 
 # Basic model parameters as external flags.
 flags = tf.app.flags
-gpu_num = 2
+gpu_num = 1
+gpu_list = [5]
+os.environ['CUDA_VISIBLE_DEVICES']='5'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 #flags.DEFINE_float('learning_rate', 0.0, 'Initial learning rate.')
 flags.DEFINE_integer('max_steps', 5000, 'Number of steps to run trainer.')
-flags.DEFINE_integer('batch_size', 10, 'Batch size.')
+flags.DEFINE_integer('batch_size', 8, 'Batch size.')
 FLAGS = flags.FLAGS
 MOVING_AVERAGE_DECAY = 0.9999
 model_save_dir = './models'
@@ -143,7 +146,8 @@ def run_training():
               'wc5b': _variable_with_weight_decay('wc5b', [3, 3, 3, 512, 512], 0.0005),
               'wd1': _variable_with_weight_decay('wd1', [8192, 4096], 0.0005),
               'wd2': _variable_with_weight_decay('wd2', [4096, 4096], 0.0005),
-              'out': _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.0005)
+              #'out': _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.0005)
+              'out': _variable_with_weight_decay('wout', [4096, 101], 0.0005)
               }
       biases = {
               'bc1': _variable_with_weight_decay('bc1', [64], 0.000),
@@ -156,13 +160,16 @@ def run_training():
               'bc5b': _variable_with_weight_decay('bc5b', [512], 0.000),
               'bd1': _variable_with_weight_decay('bd1', [4096], 0.000),
               'bd2': _variable_with_weight_decay('bd2', [4096], 0.000),
-              'out': _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.000),
+              #'out': _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.000),
+              'out': _variable_with_weight_decay('bout', [101], 0.000),
               }
     for gpu_index in range(0, gpu_num):
-      with tf.device('/gpu:%d' % gpu_index):
+      with tf.device('/gpu:%d' % gpu_list[gpu_index]):
+
+        print('gpu:'+str(gpu_list[gpu_index]))
         
         varlist2 = [ weights['out'],biases['out'] ]
-        varlist1 = list( set(weights.values() + biases.values()) - set(varlist2) )
+        varlist1 = list( (set(weights.values()) | set(biases.values())) - set(varlist2) )
         logit = c3d_model.inference_c3d(
                         images_placeholder[gpu_index * FLAGS.batch_size:(gpu_index + 1) * FLAGS.batch_size,:,:,:,:],
                         0.5,
@@ -194,17 +201,19 @@ def run_training():
     null_op = tf.no_op()
 
     # Create a saver for writing training checkpoints.
-    saver = tf.train.Saver(weights.values() + biases.values())
+    saver = tf.train.Saver(list(weights.values()) + list(biases.values()))
     init = tf.global_variables_initializer()
 
     # Create a session for running Ops on the Graph.
     sess = tf.Session(
-                    config=tf.ConfigProto(allow_soft_placement=True)
+            config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)
                     )
     sess.run(init)
     if os.path.isfile(model_filename) and use_pretrained_model:
       saver.restore(sess, model_filename)
-
+      weights['out'] =  _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.0005)
+      biases['out'] = _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.000)
+      print("success")
     # Create summary writter
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter('./visual_logs/train', sess.graph)
@@ -212,12 +221,15 @@ def run_training():
     for step in xrange(FLAGS.max_steps):
       start_time = time.time()
       train_images, train_labels, _, _, _ = input_data.read_clip_and_label(
-                      filename='list/train.list',
+                      filename='train.list',
                       batch_size=FLAGS.batch_size * gpu_num,
                       num_frames_per_clip=c3d_model.NUM_FRAMES_PER_CLIP,
                       crop_size=c3d_model.CROP_SIZE,
                       shuffle=True
                       )
+      #print(train_images.shape)
+
+
       sess.run(train_op, feed_dict={
                       images_placeholder: train_images,
                       labels_placeholder: train_labels
@@ -238,7 +250,7 @@ def run_training():
         train_writer.add_summary(summary, step)
         print('Validation Data Eval:')
         val_images, val_labels, _, _, _ = input_data.read_clip_and_label(
-                        filename='list/test.list',
+                        filename='test.list',
                         batch_size=FLAGS.batch_size * gpu_num,
                         num_frames_per_clip=c3d_model.NUM_FRAMES_PER_CLIP,
                         crop_size=c3d_model.CROP_SIZE,
