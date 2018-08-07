@@ -7,7 +7,7 @@ The problem is to do a binary classification to figure out whether the given sho
 We try to use pre-trained weights, when trainning our on model.
 The pre-trained weights we uses is **sports1m_finetuning_ucf101.model**, which we download it following the instruction of the original repo.
 
-However, our model is binary will the pre-trained weights contains the softmax layer that is 101 classes. To fix that
+However, our model is binary while the pre-trained weights contains the softmax layer that is 101 classes. To fix that
 
 > 1. We reset the softmax layer's shape and values after restoring pre-trained weights in **train_c3d_ucf101.py**.
 > 2. We modify **predict_c3d_ucf101.py**, loading trained weights from **/models**, which are producted by running ` python train_c3d_ucf101.py `
