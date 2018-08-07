@@ -1,3 +1,37 @@
+(2018.8.7)Edit note by Hanabi Syrup
+-----
+### Problem decription
+The problem is to do a binary classification to figure out whether the given short video clip contains a certain behavior that a soccor player shots the goal.
+
+### How to do that with C3D-tensorflow repo and its pre-trained weights
+We try to use pre-trained weights, when trainning our on model.
+The pre-trained weights we uses is **sports1m_finetuning_ucf101.model**, which we download it following the instruction of the original repo.
+
+However, our model is binary will the pre-trained weights contains the softmax layer that is 101 classes. To fix that
+
+> 1. We reset the softmax layer's shape and values after restoring pre-trained weights in **train_c3d_ucf101.py**.
+> 2. We modify **predict_c3d_ucf101.py**, loading trained weights from **/models**, which are producted by running ` python train_c3d_ucf101.py `
+> 3. We change NUM_CLASSES in **c3d_models.py** to 2 instead of original 101.
+> 4. We make some change to **input_data.py**, since our version of `PIL.Image` does not have `img.width`.
+
+### Data
+We provide short video clips of 20 ps with 25 fps as samples. And follows the instruction to convert each of them into 20 images. `./list/convert_images_to_list.sh` is also modified to avoid using `jot`
+
+### Requirement
+Our version of code should work at least in following environment.
+> * numpy == 1.15.0
+> * tensorflow == 1.4.0
+> * cuda == 8.0.61
+
+### Result
+
+
+
+
+
+
+-----------
+-----------
 # C3D-tensorflow
 
 This is a repository trying to implement [C3D-caffe][5] on tensorflow,useing models directly converted from original C3D-caffe.    
