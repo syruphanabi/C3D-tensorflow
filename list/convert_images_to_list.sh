@@ -20,6 +20,14 @@
 #       /Volumes/passport/datasets/action_kth/origin_images/handclapping/person01_handclapping_d2_uncomp 1
 #       ...
 
+
+function rand(){
+    min=$1
+    max=$(($2-$min+1))
+    num=$(($RANDOM+1000000000)) 
+    echo $(($num%$max+$min))
+}
+
 > train.list
 > test.list
 COUNT=-1
@@ -28,7 +36,7 @@ do
     COUNT=$[$COUNT + 1]
     for imagesFolder in "$folder"/*
     do
-        if (( $(jot -r 1 1 $2)  > 1 )); then
+        if (( $(rand 1 $2)  > 1 )); then
             echo "$imagesFolder" $COUNT >> train.list
         else
             echo "$imagesFolder" $COUNT >> test.list

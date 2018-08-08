@@ -29,7 +29,10 @@ import numpy as np
 
 # Basic model parameters as external flags.
 flags = tf.app.flags
-gpu_num = 2
+gpu_num = 1
+gpu_list = [5]
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 flags.DEFINE_integer('batch_size', 10 , 'Batch size.')
 FLAGS = flags.FLAGS
 
@@ -88,8 +91,8 @@ def run_test():
             'wc5b': _variable_with_weight_decay('wc5b', [3, 3, 3, 512, 512], 0.04, 0.00),
             'wd1': _variable_with_weight_decay('wd1', [8192, 4096], 0.04, 0.001),
             'wd2': _variable_with_weight_decay('wd2', [4096, 4096], 0.04, 0.002),
-            #'out': _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.04, 0.005)
-            'out': _variable_with_weight_decay('wout', [4096, 101], 0.04, 0.005)
+            'out': _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.04, 0.005)
+            #'out': _variable_with_weight_decay('wout', [4096, 101], 0.04, 0.005)
             }
     biases = {
             'bc1': _variable_with_weight_decay('bc1', [64], 0.04, 0.0),
@@ -102,26 +105,26 @@ def run_test():
             'bc5b': _variable_with_weight_decay('bc5b', [512], 0.04, 0.0),
             'bd1': _variable_with_weight_decay('bd1', [4096], 0.04, 0.0),
             'bd2': _variable_with_weight_decay('bd2', [4096], 0.04, 0.0),
-            #'out': _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.04, 0.0),
-            'out': _variable_with_weight_decay('bout', [101], 0.04, 0.0),
+            'out': _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.04, 0.0),
+            #'out': _variable_with_weight_decay('bout', [101], 0.04, 0.0),
             }
   logits = []
   for gpu_index in range(0, gpu_num):
-    with tf.device('/gpu:%d' % gpu_index):
+    with tf.device('/gpu:%d' % gpu_list[gpu_index]):
       logit = c3d_model.inference_c3d(images_placeholder[gpu_index * FLAGS.batch_size:(gpu_index + 1) * FLAGS.batch_size,:,:,:,:], 0.6, FLAGS.batch_size, weights, biases)
       logits.append(logit)
   logits = tf.concat(logits,0)
   norm_score = tf.nn.softmax(logits)
-  saver = tf.train.Saver()
+  #saver = tf.train.Saver()
   sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
   init = tf.global_variables_initializer()
   sess.run(init)
   # Create a saver for writing training checkpoints.
-  saver.restore(sess, model_name)
-  weights['out'] = _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.04, 0.005)
-  biases['out'] = _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.04, 0.0)
-  #saver = tf.train.import_meta_graph("./models1/c3d_ucf_model-4999.meta")
-  #saver.restore(sess, tf.train.latest_checkpoint("models1/"))
+  #saver.restore(sess, model_name)
+  #weights['out'] = _variable_with_weight_decay('wout', [4096, c3d_model.NUM_CLASSES], 0.04, 0.005)
+  #biases['out'] = _variable_with_weight_decay('bout', [c3d_model.NUM_CLASSES], 0.04, 0.0)
+  saver = tf.train.import_meta_graph("./models/c3d_ucf_model-4999.meta")
+  saver.restore(sess, tf.train.latest_checkpoint("models/"))
   # And then after everything is built, start the training loop.
   bufsize = 0
   write_file = open("predict_ret.txt", "w+", bufsize)
